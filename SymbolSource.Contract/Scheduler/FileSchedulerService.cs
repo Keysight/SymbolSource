@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SymbolSource.Contract.Processor;
 using SymbolSource.Contract.Storage;
+using Polly;
+using Polly.Retry;
 
 namespace SymbolSource.Contract.Scheduler
 {
@@ -46,13 +48,24 @@ namespace SymbolSource.Contract.Scheduler
 
         private async void Process(string file)
         {
-            var message = JsonConvert.DeserializeObject<PackageMessage>(File.ReadAllText(file));
-            Trace.TraceInformation("Processing message {0}", message);
+            Policy policy = RetryPolicy.Handle<Exception>().WaitAndRetry(3, (i) => TimeSpan.FromSeconds(1) );
 
-            await processor.Value.Process(message);
+            try
+            {
+               await policy.Execute(async () =>
+               {
+                   var message = JsonConvert.DeserializeObject<PackageMessage>(File.ReadAllText(file));
+                   Trace.TraceInformation("Processing message {0}", message);
 
-            Trace.TraceInformation("Removing signal for message {0}", message);
-            File.Delete(file);
+                   await processor.Value.Process(message);
+                   Trace.TraceInformation("Removing signal for message {0}", message);
+                   File.Delete(file);
+               });
+            }
+            catch ( Exception exception )
+            {
+                Trace.TraceWarning($"Exception found.\n{exception.GetType()}; {exception.Message}\n {exception.StackTrace}");
+            }
         }
     }
 
