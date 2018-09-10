@@ -48,6 +48,7 @@ namespace SymbolSource.Contract.Scheduler
 
         private async void Process(string file)
         {
+            await Task.Delay(1000);
             Policy policy = RetryPolicy.Handle<Exception>().WaitAndRetry(3, (i) => TimeSpan.FromSeconds(1) );
 
             try
