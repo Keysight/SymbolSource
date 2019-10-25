@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SymbolSource.Processor.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SymbolSource.Support", "SymbolSource.Support\SymbolSource.Support.csproj", "{F616FC3F-595F-4304-B147-FDAE872BB027}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SymbolSource.Processor.WindowsService", "SymbolSource.Processor.WindowsService\SymbolSource.Processor.WindowsService.csproj", "{84143911-9B5E-4CB6-8973-6D9C11046930}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{F616FC3F-595F-4304-B147-FDAE872BB027}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F616FC3F-595F-4304-B147-FDAE872BB027}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F616FC3F-595F-4304-B147-FDAE872BB027}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84143911-9B5E-4CB6-8973-6D9C11046930}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84143911-9B5E-4CB6-8973-6D9C11046930}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84143911-9B5E-4CB6-8973-6D9C11046930}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84143911-9B5E-4CB6-8973-6D9C11046930}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
