@@ -8,25 +8,36 @@ using SymbolSource.Contract;
 using SymbolSource.Contract.Container;
 using SymbolSource.Contract.Scheduler;
 using SymbolSource.Support;
+using log4net;
+using System.Threading.Tasks;
 
 namespace SymbolSource.Processor.WindowsService
 {
    public partial class SymbolSourceProcessorWindowsService : ServiceBase
    {
+      private readonly ILog log = LogManager.GetLogger("SymbolSource.Processor.WindowsService");
       CancellationTokenSource cancelSource;
 
       public SymbolSourceProcessorWindowsService()
       {
+         log.Info("Initializing the SymbolSource.Processor Windows service.");
          InitializeComponent();
          this.cancelSource = new CancellationTokenSource();
       }
 
       protected override void OnStart(string[] args)
       {
-         Trace.Listeners.Add(new ConsoleTraceListener());
+         Task.Run(() => ProcessSymbolSourceQueue());
+      }
+
+      private void ProcessSymbolSourceQueue()
+      {
+         log.Info("Starting the SymbolSource.Processor Windows service.");
 
          foreach (var assembly in typeof(PackageProcessor).Assembly.GetReferencedAssemblies())
-            Trace.WriteLine(assembly.FullName);
+         {
+            log.Debug(assembly.FullName);
+         }
 
          var shutdownWatcher = new WebJobsShutdownWatcher();
          var shutdownSource = CancellationTokenSource.CreateLinkedTokenSource(new[]
@@ -55,7 +66,8 @@ namespace SymbolSource.Processor.WindowsService
 
       protected override void OnStop()
       {
-            this.cancelSource.Cancel();
+         log.Info("Stopping the SymbolSource.Processor Windows service.");
+         this.cancelSource.Cancel();
       }
    }
 }

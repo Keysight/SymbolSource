@@ -20,6 +20,7 @@ using SymbolSource.Processor.Notifier;
 using SymbolSource.Processor.Processor;
 using IPackageFile = NuGet.IPackageFile;
 using PackageName = SymbolSource.Contract.PackageName;
+using log4net;
 
 namespace SymbolSource.Processor
 {
@@ -114,6 +115,7 @@ namespace SymbolSource.Processor
         private readonly IAddInfoBuilder addInfoBuilder;
         private readonly IPdbStoreManager pdbStoreManager;
         private readonly IFileCompressor fileCompressor;
+        private readonly ILog log = LogManager.GetLogger("SymbolSource.PackageProcessor");
 
         public PackageProcessor(
             IPackageProcessorConfiguration configuration,
@@ -205,6 +207,7 @@ namespace SymbolSource.Processor
             {
                 support.TrackException(e, new { packageName });
                 Trace.TraceError("Unexpected error while processing package {0}:\n{1}", traceName, e);
+                log.Warn($"Unexpected error while processing package {traceName}:\n{e}");
                 notifier.Damaged(userInfo, packageName).Wait();
 
                 if (packageItem != null)
@@ -226,6 +229,7 @@ namespace SymbolSource.Processor
                 tryWithPackageItemBefore: async pi =>
                 {
                     Trace.TraceInformation("Reading package {0}", pi);
+                    log.Debug($"Reading package {pi}");
                     return pi;
                 },
                 tryWithPackage: async (pi, p) =>
@@ -236,6 +240,7 @@ namespace SymbolSource.Processor
                 tryWithPackageItemAfter: async pi =>
                 {
                     Trace.TraceInformation("Queueing package {0} as {1}", pi, newPackageName);
+                    log.Info($"Queueing package {newPackageName}");
 
                     if (await pi.Copy(PackageState.Original, newPackageName) == null)
                         throw new Exception(string.Format("Failed to copy package {0} to {1}", pi, newPackageName));
@@ -248,6 +253,7 @@ namespace SymbolSource.Processor
                     await scheduler.Signal(message);
 
                     Trace.TraceInformation("Finished queueing package {0} as {1}", pi, newPackageName);
+                    log.Debug($"Queued package {newPackageName}");
                 });
             // ReSharper restore RedundantArgumentName
         }
@@ -263,18 +269,20 @@ namespace SymbolSource.Processor
                 tryWithPackageItemBefore: async pi =>
                 {
                     Trace.TraceInformation("Indexing package {0}", pi);
+                    log.Debug($"Indexing package {pi.Name}");
                     // ReSharper disable once ConvertToLambdaExpression
                     return await pi.Move(PackageState.Indexing, pi.Name);
                 },
-               tryWithPackage: async (pi, p) =>
-               {
-                   await task.IndexPackage(message.UserInfo, pi.Feed, pi.Name, pi, p);
-               },
-               tryWithPackageItemAfter: async pi =>
-               {
-                   await pi.Delete();
-                   Trace.TraceInformation("Finished indexing package {0}", pi);
-               });
+                tryWithPackage: async (pi, p) =>
+                {
+                    await task.IndexPackage(message.UserInfo, pi.Feed, pi.Name, pi, p);
+                },
+                tryWithPackageItemAfter: async pi =>
+                {
+                    await pi.Delete();
+                    Trace.TraceInformation("Finished indexing package {0}", pi);
+                    log.Info($"Indexed package {pi.Name}");
+                });
             // ReSharper restore RedundantArgumentName
         }
 
@@ -289,6 +297,7 @@ namespace SymbolSource.Processor
                 tryWithPackageItemBefore: async pi =>
                 {
                     Trace.TraceInformation("Deleting package {0}", pi);
+                    log.Debug($"Deleting package {pi}");
                     // ReSharper disable once ConvertToLambdaExpression
                     return await pi.Move(PackageState.Deleting, pi.Name);
                 },
@@ -299,6 +308,7 @@ namespace SymbolSource.Processor
                 {
                     await pi.Delete();
                     Trace.TraceInformation("Finished deleting package {0}", pi);
+                    log.Debug($"Finished deleting package {pi}");
                 });
             // ReSharper restore RedundantArgumentName
         }
@@ -314,6 +324,7 @@ namespace SymbolSource.Processor
                 tryWithPackageItemBefore: async pi =>
                 {
                     Trace.TraceInformation("Retrying package {0}", pi);
+                    log.Debug($"Retrying package {pi}");
                     return await pi.Move(PackageState.Deleting, pi.Name);
                 },
                 tryWithPackage: async (pi, p) =>
@@ -346,6 +357,7 @@ namespace SymbolSource.Processor
                 tryWithPackageItemAfter: async pi =>
                 {
                     Trace.TraceInformation("Finished retrying package {0}", pi);
+                    log.Debug($"Finished retrying package {pi}");
                     await pi.Delete();
                 }))
             // ReSharper restore RedundantArgumentName

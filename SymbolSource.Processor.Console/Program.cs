@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Threading;
 using Autofac;
+using log4net;
 using Microsoft.Azure.WebJobs;
-using SymbolSource.Contract;
 using Microsoft.ApplicationInsights.Extensibility;
+using SymbolSource.Contract;
 using SymbolSource.Contract.Container;
 using SymbolSource.Contract.Scheduler;
 using SymbolSource.Support;
@@ -12,12 +13,17 @@ namespace SymbolSource.Processor.Console
 {
     public class Program
     {
+        private static readonly ILog log = LogManager.GetLogger("SymbolSource.Processor.Console");
+
         static void Main(string[] args)
         {
-            Trace.Listeners.Add(new ConsoleTraceListener());
+            log.Info("Starting up the SymbolSource.Processor.Console");
 
+            log.Debug("Loading referenced Assemblies");
             foreach (var assembly in typeof(PackageProcessor).Assembly.GetReferencedAssemblies())
-                Trace.WriteLine(assembly.FullName);
+            {
+               log.Debug(assembly.FullName);
+            }
 
             var cancelSource = new CancellationTokenSource();
 
